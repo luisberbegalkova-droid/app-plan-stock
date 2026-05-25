@@ -1,411 +1,213 @@
 <!DOCTYPE html>
-
 <html lang="es">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Evolución de Stock | Alta Visibilidad</title>
-
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
     <style>
-
         body { 
-
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-
             margin: 0; 
-
             padding: 0;
-
         }
-
         /* Scrollbars corporativos limpios */
-
         .custom-scrollbar::-webkit-scrollbar { height: 12px; width: 12px; }
-
         .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; }
-
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
-
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
         
-
         .sticky-col-1 { position: sticky; left: 0; z-index: 30; }
-
         .sticky-col-2 { position: sticky; left: 130px; z-index: 30; }
-
     </style>
-
 </head>
-
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-
-
     <header class="bg-white border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4 shrink-0 shadow-xs">
-
         <div class="flex items-center gap-4">
-
             <h1 class="text-lg font-bold tracking-tight text-slate-900">Evolución de Stock</h1>
-
             <span class="text-[11px] text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 font-medium">
-
                 Texto de Alta Visibilidad
-
             </span>
-
         </div>
-
         
-
         <div id="controlsContainer" class="hidden flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-
             
-
             <input type="text" id="ganttSearch" placeholder="Buscar por referencia o componente..." 
-
                    class="w-full sm:w-72 px-3 py-2 text-xs bg-slate-100 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 focus:bg-white text-slate-800 placeholder-slate-400 transition-colors">
-
             
-
             <label class="relative inline-flex items-center cursor-pointer select-none shrink-0 bg-slate-100 px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-200/50 transition-colors">
-
                 <input type="checkbox" id="filterCriticalToggle" class="sr-only peer">
-
                 <div class="w-7 h-4 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[12px] after:left-[14px] after:bg-white after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-rose-500 border border-slate-200"></div>
-
                 <span class="ml-2 text-xs font-medium text-slate-700 peer-checked:text-rose-600">Ver roturas inmediatas (W1)</span>
-
             </label>
-
         </div>
-
     </header>
 
-
-
     <main id="mainContainer" class="flex-1 flex flex-col overflow-hidden">
-
         <section id="uploadSection" class="p-8 flex-1 flex items-center justify-center">
-
             <div class="max-w-xl w-full flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-xl p-12 bg-white hover:bg-slate-100/50 transition-colors cursor-pointer relative shadow-xs" id="dropZone">
-
                 <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-
                 <svg class="mx-auto h-12 w-12 text-slate-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-
                     <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-
                 </svg>
-
                 <p class="text-sm font-medium text-slate-600 text-center">Arrastra el Excel aquí para generar la vista ampliada</p>
-
             </div>
-
         </section>
-
-
 
         <section id="tableContainer" class="flex-1 overflow-auto custom-scrollbar hidden bg-white">
-
             <table class="w-full text-left border-separate border-spacing-0 whitespace-nowrap">
-
                 <thead id="tableHead" class="bg-slate-100 sticky top-0 z-40 border-b border-slate-200 text-slate-700 font-bold text-sm">
-
                     </thead>
-
                 <tbody id="tableBody" class="divide-y divide-slate-100 text-slate-600">
-
                     </tbody>
-
             </table>
-
         </section>
-
     </main>
 
-
-
     <script>
-
         let rawRows = [];
 
-
-
         const fileInput = document.getElementById('fileInput');
-
         const dropZone = document.getElementById('dropZone');
 
-
-
         fileInput.addEventListener('change', (e) => {
-
             const file = e.target.files[0];
-
             if (!file) return;
 
-
-
             const reader = new FileReader();
-
             reader.onload = function(e) {
-
                 const data = new Uint8Array(e.target.result);
-
                 const workbook = XLSX.read(data, { type: 'array' });
-
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-
                 
-
                 rawRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
-
                 
-
                 if (rawRows.length > 0) {
-
                     document.getElementById('uploadSection').classList.add('hidden');
-
                     document.getElementById('controlsContainer').classList.remove('hidden');
-
                     document.getElementById('tableContainer').classList.remove('hidden');
-
                     
-
                     applyFiltersAndRender();
-
                 }
-
             };
-
             reader.readAsArrayBuffer(file);
-
         });
 
-
-
         function renderMatrix(rows) {
-
             const thead = document.getElementById('tableHead');
-
             const tbody = document.getElementById('tableBody');
-
             
-
             const headerRow = rawRows[0]; 
-
             
-
             // 1. Cabecera optimizada
-
             let headHTML = "<tr>";
-
             headerRow.forEach((cell, index) => {
-
                 if (index === 0) {
-
                     headHTML += `<th class="p-4 bg-slate-100 sticky-col-1 border-b border-r border-slate-200 font-extrabold text-slate-900 shadow-[2px_0_4px_rgba(0,0,0,0.05)] min-w-[130px]">${cell}</th>`;
-
                 } else if (index === 1) {
-
                     headHTML += `<th class="p-4 bg-slate-100 sticky-col-2 border-b border-r border-slate-200 font-bold text-slate-600 shadow-[2px_0_4px_rgba(0,0,0,0.05)] min-w-[240px]">${cell}</th>`;
-
                 } else {
-
                     const cleanWeek = String(cell).replace('-2026', '').trim();
-
                     headHTML += `<th class="p-4 text-center min-w-[95px] border-b border-r border-slate-200/60 font-mono tracking-wider font-extrabold text-xs text-slate-800">${cleanWeek}</th>`;
-
                 }
-
             });
-
             headHTML += "</tr>";
-
             thead.innerHTML = headHTML;
 
-
-
             // 2. Render de celdas con fuentes grandes (text-sm / text-base)
-
             let bodyHTML = "";
-
             for (let i = 1; i < rows.length; i++) {
-
                 const row = rows[i];
-
                 if (!row || row.length === 0 || row[0] === "") continue;
 
-
-
                 const isSummaryRow = String(row[0]).toLowerCase().includes('negativo') || String(row[0]).toLowerCase().includes('total');
-
                 const rowBg = isSummaryRow ? "bg-slate-100 text-slate-950 font-black" : "hover:bg-slate-50/80 transition-colors";
 
-
-
                 bodyHTML += `<tr class="${rowBg}">`;
-
                 
-
                 headerRow.forEach((_, colIndex) => {
-
                     const cellValue = row[colIndex] !== undefined ? row[colIndex] : "";
-
                     
-
                     if (colIndex === 0) {
-
                         bodyHTML += `<td class="p-4 font-mono font-black text-sm text-slate-900 sticky-col-1 bg-white border-r border-b border-slate-200 shadow-[2px_0_4px_rgba(0,0,0,0.05)]">${cellValue}</td>`;
-
                     } else if (colIndex === 1) {
-
                         bodyHTML += `<td class="p-4 text-xs font-semibold text-slate-700 sticky-col-2 bg-white border-r border-b border-slate-200 truncate max-w-[240px] shadow-[2px_0_4px_rgba(0,0,0,0.05)]" title="${cellValue}">${cellValue}</td>`;
-
                     } else {
-
                         let cellBgClass = "bg-white text-slate-400";
-
                         let fontClass = "font-black text-sm";
-
                         
-
                         const num = Number(String(cellValue).replace(/[\s,%]/g, '').replace(',', '.'));
 
-
-
                         if (!isNaN(num) && String(cellValue).trim() !== "") {
-
                             if (num < 0) {
-
+                                // Valores negativos (Rotura) -> Rojo intenso
                                 cellBgClass = "bg-rose-500 text-white";
-
                                 fontClass = "font-black text-sm tracking-wide";
-
                             } else if (num > 0 && !isSummaryRow) {
-
-                                cellBgClass = "bg-emerald-600 text-white";
-
+                                if (num < 250) {
+                                    // Valores entre 0 y 250 -> Rojo más clarito (Alerta de stock bajo)
+                                    cellBgClass = "bg-rose-400 text-white";
+                                } else {
+                                    // Valores mayores o iguales a 250 -> Verde estándar
+                                    cellBgClass = "bg-emerald-600 text-white";
+                                }
                                 fontClass = "font-black text-sm tracking-wide";
-
                             } else if (isSummaryRow) {
-
                                 cellBgClass = "bg-slate-100 text-rose-600 font-black text-base";
-
                             }
-
                         }
 
-
-
                         bodyHTML += `
-
                             <td class="p-4 text-center border-r border-b border-slate-200/60 min-w-[95px] transition-all ${cellBgClass} ${fontClass}">
-
                                 ${cellValue === 0 || cellValue === "0" ? '-' : cellValue.toLocaleString()}
-
                             </td>`;
-
                     }
-
                 });
-
                 
-
                 bodyHTML += `</tr>`;
-
             }
-
             tbody.innerHTML = bodyHTML;
-
         }
 
-
-
         function applyFiltersAndRender() {
-
             if (rawRows.length === 0) return;
 
-
-
             const searchText = document.getElementById('ganttSearch').value.toLowerCase().trim();
-
             const filterOnlyCriticalW1 = document.getElementById('filterCriticalToggle').checked;
-
-
 
             const filtered = [rawRows[0]];
 
-
-
             for (let i = 1; i < rawRows.length; i++) {
-
                 const row = rawRows[i];
-
                 if (!row || row[0] === "") continue;
 
-
-
                 if (i === 1 && String(row[0]).toLowerCase().includes('negativo')) {
-
                     filtered.push(row);
-
                     continue;
-
                 }
-
-
 
                 const matchesText = String(row[0]).toLowerCase().includes(searchText) || 
-
                                     String(row[1]).toLowerCase().includes(searchText);
 
-
-
                 let matchesCriticalW1 = true;
-
                 if (filterOnlyCriticalW1) {
-
                     const firstWeekVal = row[2];
-
                     const numW1 = Number(String(firstWeekVal).replace(/[\s,%]/g, '').replace(',', '.'));
-
                     matchesCriticalW1 = !isNaN(numW1) && String(firstWeekVal).trim() !== "" && numW1 < 0;
-
                 }
-
-
 
                 if (matchesText && matchesCriticalW1) {
-
                     filtered.push(row);
-
                 }
-
             }
 
-
-
             renderMatrix(filtered);
-
         }
 
-
-
         document.getElementById('ganttSearch').addEventListener('input', applyFiltersAndRender);
-
         document.getElementById('filterCriticalToggle').addEventListener('change', applyFiltersAndRender);
-
     </script>
-
 </body>
-
 </html>
