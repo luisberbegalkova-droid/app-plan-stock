@@ -18,7 +18,7 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        /* Ancho exacto y optimizado para 5 dígitos fijos */
+        /* Ajuste estricto de la primera columna para evitar saltos de línea */
         .sticky-col-1 { 
             position: sticky; 
             left: 0; 
@@ -35,7 +35,7 @@
         <div class="flex items-center gap-4">
             <h1 class="text-lg font-bold tracking-tight text-slate-900">Evolución de Stock</h1>
             <span class="text-[11px] text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 font-medium">
-                Matriz Optimizada
+                Matriz Optimizada (Ancho Fijo)
             </span>
         </div>
         
@@ -58,7 +58,7 @@
                 <svg class="mx-auto h-12 w-12 text-slate-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                     <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
-                <p class="text-sm font-medium text-slate-600 text-center">Arrastra el Excel aquí para generar la vista ampliada</p>
+                <p class="text-sm font-medium text-slate-600 text-center">Arrastra el Excel aquí para generar la vista de alta densidad</p>
             </div>
         </section>
 
@@ -105,13 +105,14 @@
             const thead = document.getElementById('tableHead');
             const tbody = document.getElementById('tableBody');
             
+            if (!rawRows || rawRows.length === 0) return;
             const headerRow = rawRows[0]; 
             
-            // 1. Cabecera limpia y compacta
+            // 1. Renderizar Cabecera de forma segura
             let headHTML = "<tr>";
-            headHTML += `<th class="p-4 bg-slate-100 sticky-col-1 border-b border-r border-slate-200 font-extrabold text-slate-900 shadow-[2px_0_4px_rgba(0,0,0,0.05)] text-center">${headerRow[0]}</th>`;
+            headHTML += `<th class="p-4 bg-slate-100 sticky-col-1 border-b border-r border-slate-200 font-extrabold text-slate-900 shadow-[2px_0_4px_rgba(0,0,0,0.05)] text-center">${headerRow[0] || 'Referencia'}</th>`;
             
-            // Mapeamos las semanas saltándonos la columna de detalle original (índice 1)
+            // Saltamos explícitamente el índice 1 (la columna de descripciones) al pintar
             for (let j = 2; j < headerRow.length; j++) {
                 if (headerRow[j] !== undefined && headerRow[j] !== "") {
                     const cleanWeek = String(headerRow[j]).replace('-2026', '').trim();
@@ -121,7 +122,7 @@
             headHTML += "</tr>";
             thead.innerHTML = headHTML;
 
-            // 2. Render de celdas con fuentes grandes e información integrada en tooltips
+            // 2. Renderizar Filas de la cuadrícula
             let bodyHTML = "";
             for (let i = 1; i < rows.length; i++) {
                 const row = rows[i];
@@ -129,11 +130,13 @@
 
                 const isSummaryRow = String(row[0]).toLowerCase().includes('negativo') || String(row[0]).toLowerCase().includes('total');
                 const rowBg = isSummaryRow ? "bg-slate-100 text-slate-950 font-black" : "hover:bg-slate-50/80 transition-colors";
+                
+                // Guardamos el detalle (columna 2) de forma segura si existe
                 const rowDesc = row[1] ? String(row[1]).trim() : "";
 
                 bodyHTML += `<tr class="${rowBg} group/row">`;
                 
-                // Celda de Referencia Madre fija a la izquierda con ancho exacto
+                // Celda fija de Referencia con Tooltip flotante fuera del layout de la tabla
                 bodyHTML += `
                     <td class="p-4 font-mono font-black text-sm text-slate-900 sticky-col-1 bg-white border-r border-b border-slate-200 shadow-[2px_0_4px_rgba(0,0,0,0.05)] text-center relative">
                         ${row[0]}
@@ -143,7 +146,7 @@
                         </div>` : ''}
                     </td>`;
                 
-                // Celdas de Cantidades Semanales
+                // Celdas semanales (Empezando desde el índice 2 para ignorar el texto largo)
                 for (let j = 2; j < headerRow.length; j++) {
                     if (headerRow[j] !== undefined && headerRow[j] !== "") {
                         const cellValue = row[j] !== undefined ? row[j] : "";
@@ -177,7 +180,7 @@
         }
 
         function applyFiltersAndRender() {
-            if (rawRows.length === 0) return;
+            if (!rawRows || rawRows.length === 0) return;
 
             const searchText = document.getElementById('ganttSearch').value.toLowerCase().trim();
             const filterOnlyCriticalW1 = document.getElementById('filterCriticalToggle').checked;
@@ -188,14 +191,16 @@
                 const row = rawRows[i];
                 if (!row || row[0] === "") continue;
 
-                if (i === 1 && String(row[0]).toLowerCase().includes('negativo')) {
+                // Fila de resumen de cabecera (Ítems en negativo) siempre pasa
+                if (String(row[0]).toLowerCase().includes('negativo') || String(row[0]).toLowerCase().includes('nº referencias')) {
                     filtered.push(row);
                     continue;
                 }
 
-                // El buscador sigue indexando la descripción oculta por si necesitas filtrar por ella
-                const matchesText = String(row[0]).toLowerCase().includes(searchText) || 
-                                    String(row[1]).toLowerCase().includes(searchText);
+                // El buscador puede indexar tanto el código como el detalle oculto en memoria
+                const textInCol0 = row[0] ? String(row[0]).toLowerCase() : "";
+                const textInCol1 = row[1] ? String(row[1]).toLowerCase() : "";
+                const matchesText = textInCol0.includes(searchText) || textInCol1.includes(searchText);
 
                 let matchesCriticalW1 = true;
                 if (filterOnlyCriticalW1) {
