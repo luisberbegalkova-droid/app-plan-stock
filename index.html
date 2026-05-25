@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualizador de Stock | Fullscreen</title>
+    <title>Evolución de Stock | Modos de Filtrado</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
@@ -12,48 +12,55 @@
             margin: 0; 
             padding: 0;
         }
-        /* Scrollbars corporativos y fluidos */
+        /* Scrollbars premium */
         .custom-scrollbar::-webkit-scrollbar { height: 10px; width: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
         
-        /* Ajuste de scroll pegajoso para evitar saltos de línea */
         .sticky-col-1 { position: sticky; left: 0; z-index: 30; }
-        .sticky-col-2 { position: sticky; left: 100px; z-index: 30; }
+        .sticky-col-2 { position: sticky; left: 120px; z-index: 30; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
 
-    <header class="bg-slate-950 border-b border-slate-800 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
-        <div class="flex items-center gap-3">
-            <h1 class="text-base font-bold tracking-tight text-white">Evolución de Stock</h1>
-            <span class="text-xs text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">Vista de Alta Densidad</span>
+    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4 shrink-0 shadow-md">
+        <div class="flex items-center gap-4">
+            <h1 class="text-lg font-bold tracking-tight text-white">Evolución de Stock</h1>
+            <span class="text-[11px] text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20 font-medium">
+                Matriz de Burbujas Activa
+            </span>
         </div>
         
-        <div id="searchContainer" class="hidden w-full sm:w-80">
-            <input type="text" id="ganttSearch" placeholder="Buscar por referencia o componente..." 
-                   class="w-full px-3 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-md focus:outline-none focus:border-blue-500 text-slate-200 placeholder-slate-500 transition-colors">
+        <div id="controlsContainer" class="hidden flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+            
+            <input type="text" id="ganttSearch" placeholder="Buscar por referencia o subcomponente..." 
+                   class="w-full sm:w-72 px-3 py-2 text-xs bg-slate-950 border border-slate-700 rounded-lg focus:outline-none focus:border-blue-500 text-slate-200 placeholder-slate-500 transition-colors">
+            
+            <label class="relative inline-flex items-center cursor-pointer select-none shrink-0 bg-slate-950 px-3 py-2 rounded-lg border border-slate-700">
+                <input type="checkbox" id="filterCriticalToggle" class="sr-only peer">
+                <div class="w-7 h-4 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[12px] after:left-[14px] after:bg-slate-400 after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:after:bg-rose-400 peer-checked:bg-rose-950/50 border border-slate-700"></div>
+                <span class="ml-2 text-xs font-medium text-slate-300 peer-checked:text-rose-400">Ver roturas inmediatas (W1)</span>
+            </label>
         </div>
     </header>
 
     <main id="mainContainer" class="flex-1 flex flex-col overflow-hidden">
         <section id="uploadSection" class="p-8 flex-1 flex items-center justify-center">
-            <div class="max-w-xl w-full flex flex-col items-center justify-center border-2 border-dashed border-slate-700 rounded-xl p-12 bg-slate-950/50 hover:bg-slate-950 transition-colors cursor-pointer relative" id="dropZone">
+            <div class="max-w-xl w-full flex flex-col items-center justify-center border-2 border-dashed border-slate-700 rounded-xl p-12 bg-slate-900/40 hover:bg-slate-900 transition-colors cursor-pointer relative" id="dropZone">
                 <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
                 <svg class="mx-auto h-12 w-12 text-slate-500 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                     <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
-                <p class="text-sm font-semibold text-blue-400 text-center">Suelte aquí el archivo Excel con las pestañas de evolución</p>
-                <p class="text-xs text-slate-500 mt-1">Procesamiento inmediato a pantalla completa</p>
+                <p class="text-sm font-medium text-slate-300 text-center">Arrastra el Excel aquí para generar la vista de burbujas</p>
             </div>
         </section>
 
         <section id="tableContainer" class="flex-1 overflow-auto custom-scrollbar hidden bg-slate-950">
-            <table class="w-full text-left border-collapse text-[11px] whitespace-nowrap">
-                <thead id="tableHead" class="bg-slate-900 sticky top-0 z-40 border-b border-slate-800 text-slate-300 font-semibold">
+            <table class="w-full text-left border-collapse text-xs whitespace-nowrap">
+                <thead id="tableHead" class="bg-slate-900 sticky top-0 z-40 border-b border-slate-800 text-slate-300 font-semibold shadow-sm">
                     </thead>
-                <tbody id="tableBody" class="divide-y divide-slate-900 text-slate-400">
+                <tbody id="tableBody" class="divide-y divide-slate-900/60 text-slate-400">
                     </tbody>
             </table>
         </section>
@@ -64,13 +71,6 @@
 
         const fileInput = document.getElementById('fileInput');
         const dropZone = document.getElementById('dropZone');
-
-        ['dragenter', 'dragover'].forEach(name => {
-            dropZone.addEventListener(name, () => dropZone.classList.add('border-blue-500', 'bg-slate-950'), false);
-        });
-        ['dragleave', 'drop'].forEach(name => {
-            dropZone.addEventListener(name, () => dropZone.classList.remove('border-blue-500', 'bg-slate-950'), false);
-        });
 
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -86,10 +86,10 @@
                 
                 if (rawRows.length > 0) {
                     document.getElementById('uploadSection').classList.add('hidden');
-                    document.getElementById('searchContainer').classList.remove('hidden');
+                    document.getElementById('controlsContainer').classList.remove('hidden');
                     document.getElementById('tableContainer').classList.remove('hidden');
                     
-                    renderMatrix(rawRows);
+                    applyFiltersAndRender();
                 }
             };
             reader.readAsArrayBuffer(file);
@@ -99,61 +99,61 @@
             const thead = document.getElementById('tableHead');
             const tbody = document.getElementById('tableBody');
             
-            const headerRow = rows[0];
+            const headerRow = rawRows[0]; // Siempre referenciamos la cabecera original
             
-            // 1. Renderizado de Cabecera Fija
+            // 1. Cabecera Fija e Intercalada con Filas Cómodas
             let headHTML = "<tr>";
             headerRow.forEach((cell, index) => {
                 if (index === 0) {
-                    headHTML += `<th class="p-2 bg-slate-900 sticky-col-1 border-r border-slate-800 min-w-[100px] font-bold text-white shadow-[2px_0_5px_rgba(0,0,0,0.3)]">${cell}</th>`;
+                    headHTML += `<th class="p-4 bg-slate-900 sticky-col-1 border-r border-slate-800 min-w-[120px] font-bold text-white shadow-[3px_0_5px_rgba(0,0,0,0.4)]">${cell}</th>`;
                 } else if (index === 1) {
-                    headHTML += `<th class="p-2 bg-slate-900 sticky-col-2 border-r border-slate-800 min-w-[180px] font-medium text-slate-400 shadow-[2px_0_5px_rgba(0,0,0,0.3)]">${cell}</th>`;
+                    headHTML += `<th class="p-4 bg-slate-900 sticky-col-2 border-r border-slate-800 min-w-[220px] font-medium text-slate-400 shadow-[3px_0_5px_rgba(0,0,0,0.4)]">${cell}</th>`;
                 } else {
                     const cleanWeek = String(cell).replace('-2026', '').trim();
-                    headHTML += `<th class="p-2 text-center min-w-[55px] border-r border-slate-800 font-mono">${cleanWeek}</th>`;
+                    headHTML += `<th class="p-4 text-center min-w-[70px] border-r border-slate-800/50 font-mono text-xs">${cleanWeek}</th>`;
                 }
             });
             headHTML += "</tr>";
             thead.innerHTML = headHTML;
 
-            // 2. Renderizado de Filas de Datos (Sin márgenes)
+            // 2. Render de Datos con Fila Ampliada (p-3 / p-4)
             let bodyHTML = "";
             for (let i = 1; i < rows.length; i++) {
                 const row = rows[i];
                 if (!row || row.length === 0 || row[0] === "") continue;
 
-                // Estilo especial para la primera fila si contiene resúmenes como "Items en negativo"
                 const isSummaryRow = String(row[0]).toLowerCase().includes('negativo') || String(row[0]).toLowerCase().includes('total');
-                const rowBg = isSummaryRow ? "bg-slate-900 font-medium border-b-2 border-slate-700" : "hover:bg-slate-900/60 transition-colors";
+                const rowBg = isSummaryRow ? "bg-slate-900/90 font-semibold border-b border-slate-700" : "hover:bg-slate-900/50 transition-colors";
 
+                // Fila más alta y espaciada
                 bodyHTML += `<tr class="${rowBg}">`;
                 
                 headerRow.forEach((_, colIndex) => {
                     const cellValue = row[colIndex] !== undefined ? row[colIndex] : "";
                     
                     if (colIndex === 0) {
-                        bodyHTML += `<td class="p-2 font-mono font-bold text-slate-200 sticky-col-1 bg-slate-950 border-r border-slate-800 shadow-[2px_0_5px_rgba(0,0,0,0.3)]">${cellValue}</td>`;
+                        bodyHTML += `<td class="p-3.5 font-mono font-bold text-sm text-slate-200 sticky-col-1 bg-slate-950 border-r border-slate-800 shadow-[3px_0_5px_rgba(0,0,0,0.4)]">${cellValue}</td>`;
                     } else if (colIndex === 1) {
-                        bodyHTML += `<td class="p-2 text-slate-400 sticky-col-2 bg-slate-950 border-r border-slate-800 truncate max-w-[180px] shadow-[2px_0_5px_rgba(0,0,0,0.3)]" title="${cellValue}">${cellValue}</td>`;
+                        bodyHTML += `<td class="p-3.5 text-xs text-slate-400 sticky-col-2 bg-slate-950 border-r border-slate-800 truncate max-w-[220px] shadow-[3px_0_5px_rgba(0,0,0,0.4)]" title="${cellValue}">${cellValue}</td>`;
                     } else {
-                        let cellStyle = "text-slate-400";
+                        let bubbleClass = "text-slate-500 bg-transparent"; 
                         const num = Number(String(cellValue).replace(/[\s,%]/g, '').replace(',', '.'));
 
                         if (!isNaN(num) && String(cellValue).trim() !== "") {
                             if (num < 0) {
-                                // Rojo corporativo de alerta de rotura muy vivo
-                                cellStyle = "bg-rose-600 text-white font-bold rounded-xs px-1";
+                                // Burbuja Roja de Rotura
+                                bubbleClass = "bg-rose-600 text-white font-bold rounded-full px-2 shadow-sm shadow-rose-900/50";
                             } else if (num > 0 && !isSummaryRow) {
-                                // Verde sutil para valores con stock disponible
-                                cellStyle = "text-emerald-400 font-medium";
+                                // Burbuja Verde Esmeralda Solicitada
+                                bubbleClass = "bg-emerald-500/15 text-emerald-400 font-semibold rounded-full px-2 border border-emerald-500/20";
                             } else if (isSummaryRow) {
-                                cellStyle = "text-rose-400 font-bold";
+                                bubbleClass = "text-rose-400 font-bold text-sm";
                             }
                         }
 
                         bodyHTML += `
-                            <td class="p-1 text-center border-r border-slate-900 min-w-[55px]">
-                                <span class="block py-0.5 text-[11px] ${cellStyle}">
+                            <td class="p-2 text-center border-r border-slate-900 min-w-[70px]">
+                                <span class="inline-block py-1 text-[11px] min-w-[42px] text-center ${bubbleClass}">
                                     ${cellValue === 0 || cellValue === "0" ? '-' : cellValue.toLocaleString()}
                                 </span>
                             </td>`;
@@ -165,25 +165,49 @@
             tbody.innerHTML = bodyHTML;
         }
 
-        // Motor de búsqueda de alta velocidad
-        document.getElementById('ganttSearch').addEventListener('input', function(e) {
-            const query = e.target.value.toLowerCase().trim();
+        // Centralizador de lógica de filtrado (Buscador + Switch Crítico)
+        function applyFiltersAndRender() {
             if (rawRows.length === 0) return;
 
-            const filteredRows = [rawRows[0]];
+            const searchText = document.getElementById('ganttSearch').value.toLowerCase().trim();
+            const filterOnlyCriticalW1 = document.getElementById('filterCriticalToggle').checked;
+
+            // Conservar cabecera siempre
+            const filtered = [rawRows[0]];
+
             for (let i = 1; i < rawRows.length; i++) {
                 const row = rawRows[i];
-                // Permitimos que la fila resumen siempre se quede visible si existe
+                if (!row || row[0] === "") continue;
+
+                // Mantener siempre la fila resumen de la cabecera ("Items en negativo") si está arriba
                 if (i === 1 && String(row[0]).toLowerCase().includes('negativo')) {
-                    filteredRows.push(row);
+                    filtered.push(row);
                     continue;
                 }
-                if (row[0] && (String(row[0]).toLowerCase().includes(query) || String(row[1]).toLowerCase().includes(query))) {
-                    filteredRows.push(row);
+
+                // 1. Condición de búsqueda por texto
+                const matchesText = String(row[0]).toLowerCase().includes(searchText) || 
+                                    String(row[1]).toLowerCase().includes(searchText);
+
+                // 2. Condición de rotura en primera semana (Columna índice 2 del Excel real)
+                let matchesCriticalW1 = true;
+                if (filterOnlyCriticalW1) {
+                    const firstWeekVal = row[2];
+                    const numW1 = Number(String(firstWeekVal).replace(/[\s,%]/g, '').replace(',', '.'));
+                    matchesCriticalW1 = !isNaN(numW1) && String(firstWeekVal).trim() !== "" && numW1 < 0;
+                }
+
+                if (matchesText && matchesCriticalW1) {
+                    filtered.push(row);
                 }
             }
-            renderMatrix(filteredRows);
-        });
+
+            renderMatrix(filtered);
+        }
+
+        // Listeners de los filtros reactivos
+        document.getElementById('ganttSearch').addEventListener('input', applyFiltersAndRender);
+        document.getElementById('filterCriticalToggle').addEventListener('change', applyFiltersAndRender);
     </script>
 </body>
 </html>
