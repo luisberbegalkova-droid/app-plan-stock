@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evolución de Stock | Vista Ultra Limpia</title>
+    <title>Evolución de Stock | Alta Visibilidad</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
@@ -12,26 +12,14 @@
             margin: 0; 
             padding: 0;
         }
-        /* Scrollbars limpios */
+        /* Scrollbars corporativos limpios */
         .custom-scrollbar::-webkit-scrollbar { height: 12px; width: 12px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        /* Primera columna siempre fija a la izquierda */
-        .col-madre-strict {
-            position: sticky;
-            left: 0;
-            z-index: 30;
-            min-width: 88px;
-            max-width: 88px;
-            width: 88px;
-            background-color: #ffffff !important;
-        }
-        
-        thead .col-madre-strict {
-            background-color: #f1f5f9 !important;
-        }
+        .sticky-col-1 { position: sticky; left: 0; z-index: 30; }
+        .sticky-col-2 { position: sticky; left: 130px; z-index: 30; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
@@ -39,13 +27,14 @@
     <header class="bg-white border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4 shrink-0 shadow-xs">
         <div class="flex items-center gap-4">
             <h1 class="text-lg font-bold tracking-tight text-slate-900">Evolución de Stock</h1>
-            <span class="text-[11px] text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200 font-medium">
-                Matriz Optimizada sin Ruido
+            <span class="text-[11px] text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 font-medium">
+                Texto de Alta Visibilidad
             </span>
         </div>
         
         <div id="controlsContainer" class="hidden flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-            <input type="text" id="ganttSearch" placeholder="Buscar componente o detalle..." 
+            
+            <input type="text" id="ganttSearch" placeholder="Buscar por referencia o componente..." 
                    class="w-full sm:w-72 px-3 py-2 text-xs bg-slate-100 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 focus:bg-white text-slate-800 placeholder-slate-400 transition-colors">
             
             <label class="relative inline-flex items-center cursor-pointer select-none shrink-0 bg-slate-100 px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-200/50 transition-colors">
@@ -63,13 +52,13 @@
                 <svg class="mx-auto h-12 w-12 text-slate-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                     <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
-                <p class="text-sm font-medium text-slate-600 text-center">Arrastra el Excel aquí para generar la vista final optimizada</p>
+                <p class="text-sm font-medium text-slate-600 text-center">Arrastra el Excel aquí para generar la vista ampliada</p>
             </div>
         </section>
 
         <section id="tableContainer" class="flex-1 overflow-auto custom-scrollbar hidden bg-white">
             <table class="w-full text-left border-separate border-spacing-0 whitespace-nowrap">
-                <thead id="tableHead" class="sticky top-0 z-40 border-b border-slate-200 text-slate-700 font-bold text-sm">
+                <thead id="tableHead" class="bg-slate-100 sticky top-0 z-40 border-b border-slate-200 text-slate-700 font-bold text-sm">
                     </thead>
                 <tbody id="tableBody" class="divide-y divide-slate-100 text-slate-600">
                     </tbody>
@@ -93,7 +82,6 @@
                 const workbook = XLSX.read(data, { type: 'array' });
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 
-                // CORREGIDO: coma reemplazando al punto y coma erróneo de antes
                 rawRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
                 
                 if (rawRows.length > 0) {
@@ -112,22 +100,23 @@
             const tbody = document.getElementById('tableBody');
             
             const headerRow = rawRows[0]; 
-
-            // 1. Cabecera con la primera columna ajustada
-            let headHTML = "<tr>";
-            headHTML += `<th class="p-4 col-madre-strict border-b border-r border-slate-200 font-extrabold text-slate-900 shadow-[2px_0_4px_rgba(0,0,0,0.05)] text-center">${headerRow[0]}</th>`;
             
-            // Renderizar el resto de columnas (semanas) saltándonos la columna 2 del Excel original
-            for (let j = 2; j < headerRow.length; j++) {
-                if (headerRow[j] !== undefined && headerRow[j] !== "") {
-                    const cleanWeek = String(headerRow[j]).replace('-2026', '').trim();
+            // 1. Cabecera optimizada
+            let headHTML = "<tr>";
+            headerRow.forEach((cell, index) => {
+                if (index === 0) {
+                    headHTML += `<th class="p-4 bg-slate-100 sticky-col-1 border-b border-r border-slate-200 font-extrabold text-slate-900 shadow-[2px_0_4px_rgba(0,0,0,0.05)] min-w-[130px]">${cell}</th>`;
+                } else if (index === 1) {
+                    headHTML += `<th class="p-4 bg-slate-100 sticky-col-2 border-b border-r border-slate-200 font-bold text-slate-600 shadow-[2px_0_4px_rgba(0,0,0,0.05)] min-w-[240px]">${cell}</th>`;
+                } else {
+                    const cleanWeek = String(cell).replace('-2026', '').trim();
                     headHTML += `<th class="p-4 text-center min-w-[95px] border-b border-r border-slate-200/60 font-mono tracking-wider font-extrabold text-xs text-slate-800">${cleanWeek}</th>`;
                 }
-            }
+            });
             headHTML += "</tr>";
             thead.innerHTML = headHTML;
 
-            // 2. Renderizado de filas con Tooltip Integrado en las Celdas
+            // 2. Render de celdas con fuentes grandes (text-sm / text-base)
             let bodyHTML = "";
             for (let i = 1; i < rows.length; i++) {
                 const row = rows[i];
@@ -135,24 +124,17 @@
 
                 const isSummaryRow = String(row[0]).toLowerCase().includes('negativo') || String(row[0]).toLowerCase().includes('total');
                 const rowBg = isSummaryRow ? "bg-slate-100 text-slate-950 font-black" : "hover:bg-slate-50/80 transition-colors";
-                const detalleOculto = row[1] ? String(row[1]).trim() : "";
 
-                bodyHTML += `<tr class="${rowBg} group/row">`;
+                bodyHTML += `<tr class="${rowBg}">`;
                 
-                // Código de Referencia Principal
-                bodyHTML += `
-                    <td class="p-4 font-mono font-black text-sm text-slate-900 col-madre-strict border-r border-b border-slate-200 shadow-[2px_0_4px_rgba(0,0,0,0.05)] text-center relative">
-                        ${row[0]}
-                        ${detalleOculto ? `
-                        <div class="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-slate-900 text-white text-xs rounded-md py-1.5 px-3 opacity-0 group-hover/row:opacity-100 pointer-events-none transition-opacity z-50 shadow-lg font-sans font-normal tracking-normal whitespace-nowrap">
-                            ${detalleOculto}
-                        </div>` : ''}
-                    </td>`;
-
-                // Celdas de Cantidades Semanales (Mapeadas saltando el índice 1)
-                for (let j = 2; j < headerRow.length; j++) {
-                    if (headerRow[j] !== undefined && headerRow[j] !== "") {
-                        const cellValue = row[j] !== undefined ? row[j] : "";
+                headerRow.forEach((_, colIndex) => {
+                    const cellValue = row[colIndex] !== undefined ? row[colIndex] : "";
+                    
+                    if (colIndex === 0) {
+                        bodyHTML += `<td class="p-4 font-mono font-black text-sm text-slate-900 sticky-col-1 bg-white border-r border-b border-slate-200 shadow-[2px_0_4px_rgba(0,0,0,0.05)]">${cellValue}</td>`;
+                    } else if (colIndex === 1) {
+                        bodyHTML += `<td class="p-4 text-xs font-semibold text-slate-700 sticky-col-2 bg-white border-r border-b border-slate-200 truncate max-w-[240px] shadow-[2px_0_4px_rgba(0,0,0,0.05)]" title="${cellValue}">${cellValue}</td>`;
+                    } else {
                         let cellBgClass = "bg-white text-slate-400";
                         let fontClass = "font-black text-sm";
                         
@@ -175,7 +157,7 @@
                                 ${cellValue === 0 || cellValue === "0" ? '-' : cellValue.toLocaleString()}
                             </td>`;
                     }
-                }
+                });
                 
                 bodyHTML += `</tr>`;
             }
@@ -216,6 +198,9 @@
 
             renderMatrix(filtered);
         }
+
+        document.getElementById('ganttSearch').addEventListener('input', applyFiltersAndRender);
+        document.getElementById('filterCriticalToggle').addEventListener('change', applyFiltersAndRender);
     </script>
 </body>
 </html>
