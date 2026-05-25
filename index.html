@@ -18,7 +18,7 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        /* Ajuste estricto de la primera columna para evitar saltos de línea */
+        /* Ajuste estricto e inmune para la primera columna fija (5 dígitos) */
         .sticky-col-1 { 
             position: sticky; 
             left: 0; 
@@ -35,7 +35,7 @@
         <div class="flex items-center gap-4">
             <h1 class="text-lg font-bold tracking-tight text-slate-900">Evolución de Stock</h1>
             <span class="text-[11px] text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 font-medium">
-                Matriz Optimizada (Ancho Fijo)
+                Matriz de Alta Densidad Activa
             </span>
         </div>
         
@@ -58,16 +58,16 @@
                 <svg class="mx-auto h-12 w-12 text-slate-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                     <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
-                <p class="text-sm font-medium text-slate-600 text-center">Arrastra el Excel aquí para generar la vista de alta densidad</p>
+                <p class="text-sm font-medium text-slate-600 text-center">Arrastra el Excel aquí para generar la vista final optimizada</p>
             </div>
         </section>
 
         <section id="tableContainer" class="flex-1 overflow-auto custom-scrollbar hidden bg-white">
             <table class="w-full text-left border-separate border-spacing-0 whitespace-nowrap">
-                <thead id="tableHead" class="bg-slate-100 sticky top-0 z-40 border-b border-slate-200 text-slate-700 font-bold text-sm">
-                </thead>
+                <thead id="tableHead" class="sticky top-0 z-40 border-b border-slate-200 text-slate-700 font-bold text-sm">
+                    </thead>
                 <tbody id="tableBody" class="divide-y divide-slate-100 text-slate-600">
-                </tbody>
+                    </tbody>
             </table>
         </section>
     </main>
@@ -105,38 +105,38 @@
             const thead = document.getElementById('tableHead');
             const tbody = document.getElementById('tableBody');
             
-            if (!rawRows || rawRows.length === 0) return;
+            // Usamos la primera fila como cabecera global de la hoja de cálculo
             const headerRow = rawRows[0]; 
             
-            // 1. Renderizar Cabecera de forma segura
+            // 1. Construcción limpia de la Cabecera
             let headHTML = "<tr>";
-            headHTML += `<th class="p-4 bg-slate-100 sticky-col-1 border-b border-r border-slate-200 font-extrabold text-slate-900 shadow-[2px_0_4px_rgba(0,0,0,0.05)] text-center">${headerRow[0] || 'Referencia'}</th>`;
+            headHTML += `<th class="p-4 bg-slate-100 sticky-col-1 border-b border-r border-slate-200 font-extrabold text-slate-900 shadow-[2px_0_4px_rgba(0,0,0,0.05)] text-center">${headerRow[0] || 'Ref'}</th>`;
             
-            // Saltamos explícitamente el índice 1 (la columna de descripciones) al pintar
+            // Pintamos el resto de semanas saltándonos la descripción (índice 1)
             for (let j = 2; j < headerRow.length; j++) {
-                if (headerRow[j] !== undefined && headerRow[j] !== "") {
-                    const cleanWeek = String(headerRow[j]).replace('-2026', '').trim();
+                const weekValue = headerRow[j];
+                if (weekValue !== undefined && weekValue !== null && String(weekValue).trim() !== "") {
+                    const cleanWeek = String(weekValue).replace('-2026', '').trim();
                     headHTML += `<th class="p-4 text-center min-w-[95px] border-b border-r border-slate-200/60 font-mono tracking-wider font-extrabold text-xs text-slate-800">${cleanWeek}</th>`;
                 }
             }
             headHTML += "</tr>";
             thead.innerHTML = headHTML;
 
-            // 2. Renderizar Filas de la cuadrícula
+            // 2. Construcción fluida de las filas filtradas
             let bodyHTML = "";
-            for (let i = 1; i < rows.length; i++) {
+            for (let i = 0; i < rows.length; i++) {
                 const row = rows[i];
-                if (!row || row.length === 0 || row[0] === "") continue;
+                // Saltamos la fila de cabecera que viene duplicada en el array de filtros
+                if (!row || row.length === 0 || row[0] === headerRow[0]) continue;
 
                 const isSummaryRow = String(row[0]).toLowerCase().includes('negativo') || String(row[0]).toLowerCase().includes('total');
                 const rowBg = isSummaryRow ? "bg-slate-100 text-slate-950 font-black" : "hover:bg-slate-50/80 transition-colors";
-                
-                // Guardamos el detalle (columna 2) de forma segura si existe
                 const rowDesc = row[1] ? String(row[1]).trim() : "";
 
                 bodyHTML += `<tr class="${rowBg} group/row">`;
                 
-                // Celda fija de Referencia con Tooltip flotante fuera del layout de la tabla
+                // Celda de identificación fija a la izquierda con Tooltip dinámico
                 bodyHTML += `
                     <td class="p-4 font-mono font-black text-sm text-slate-900 sticky-col-1 bg-white border-r border-b border-slate-200 shadow-[2px_0_4px_rgba(0,0,0,0.05)] text-center relative">
                         ${row[0]}
@@ -146,9 +146,10 @@
                         </div>` : ''}
                     </td>`;
                 
-                // Celdas semanales (Empezando desde el índice 2 para ignorar el texto largo)
+                // Celdas de stock semanales (alineadas estrictamente al índice j de la cabecera)
                 for (let j = 2; j < headerRow.length; j++) {
-                    if (headerRow[j] !== undefined && headerRow[j] !== "") {
+                    const checkWeekHeader = headerRow[j];
+                    if (checkWeekHeader !== undefined && checkWeekHeader !== null && String(checkWeekHeader).trim() !== "") {
                         const cellValue = row[j] !== undefined ? row[j] : "";
                         let cellBgClass = "bg-white text-slate-400";
                         let fontClass = "font-black text-sm";
@@ -185,26 +186,26 @@
             const searchText = document.getElementById('ganttSearch').value.toLowerCase().trim();
             const filterOnlyCriticalW1 = document.getElementById('filterCriticalToggle').checked;
 
+            // La primera fila (cabecera) se pasa como base de comparación
             const filtered = [rawRows[0]];
 
             for (let i = 1; i < rawRows.length; i++) {
                 const row = rawRows[i];
                 if (!row || row[0] === "") continue;
 
-                // Fila de resumen de cabecera (Ítems en negativo) siempre pasa
+                // Forzar que la fila resumen pase siempre los filtros visuales de texto
                 if (String(row[0]).toLowerCase().includes('negativo') || String(row[0]).toLowerCase().includes('nº referencias')) {
                     filtered.push(row);
                     continue;
                 }
 
-                // El buscador puede indexar tanto el código como el detalle oculto en memoria
                 const textInCol0 = row[0] ? String(row[0]).toLowerCase() : "";
                 const textInCol1 = row[1] ? String(row[1]).toLowerCase() : "";
                 const matchesText = textInCol0.includes(searchText) || textInCol1.includes(searchText);
 
                 let matchesCriticalW1 = true;
                 if (filterOnlyCriticalW1) {
-                    const firstWeekVal = row[2];
+                    const firstWeekVal = row[2]; // Primera columna de cantidades numéricas
                     const numW1 = Number(String(firstWeekVal).replace(/[\s,%]/g, '').replace(',', '.'));
                     matchesCriticalW1 = !isNaN(numW1) && String(firstWeekVal).trim() !== "" && numW1 < 0;
                 }
