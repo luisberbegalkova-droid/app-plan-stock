@@ -142,17 +142,17 @@
 
                         if (!isNaN(num) && String(cellValue).trim() !== "") {
                             if (num < 0) {
-                                // Valores negativos (Rotura) -> Rojo intenso
-                                cellBgClass = "bg-rose-500 text-white";
-                                fontClass = "font-black text-sm tracking-wide";
-                            } else if (num > 0 && !isSummaryRow) {
-                                if (num < 250) {
-                                    // Valores entre 0 y 250 -> Rojo más clarito (Alerta de stock bajo)
+                                if (num >= -250) {
+                                    // Valores entre -250 y 0 -> Rojo más clarito (Rotura leve)
                                     cellBgClass = "bg-rose-400 text-white";
                                 } else {
-                                    // Valores mayores o iguales a 250 -> Verde estándar
-                                    cellBgClass = "bg-emerald-600 text-white";
+                                    // Valores menores a -250 -> Rojo intenso (Rotura grave)
+                                    cellBgClass = "bg-rose-500 text-white";
                                 }
+                                fontClass = "font-black text-sm tracking-wide";
+                            } else if (num > 0 && !isSummaryRow) {
+                                // Valores mayores a 0 -> Verde estándar
+                                cellBgClass = "bg-emerald-600 text-white";
                                 fontClass = "font-black text-sm tracking-wide";
                             } else if (isSummaryRow) {
                                 cellBgClass = "bg-slate-100 text-rose-600 font-black text-base";
